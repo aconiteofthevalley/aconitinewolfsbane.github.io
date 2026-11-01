@@ -15,8 +15,8 @@ const DEVELOPER_USERNAME = "aconite";
 const DEVELOPER_EMAIL = "aconiteofthevalley@gmail.com";
 
 // Your pictures
-const LOGO_SRC = "file:///C:/Users/joana/OneDrive/Desktop/Personal%20Webpage/cake.png";
-const PROFILE_SRC = "file:///C:/Users/joana/OneDrive/Desktop/Personal%20Webpage/5a45455dee8a1c68c98b18d9f7f3ee56.png";
+const LOGO_SRC = "cake.png";
+const PROFILE_SRC = "5a45455dee8a1c68c98b18d9f7f3ee56.png";
 
 
 // ---------- 2. YOUR INFO (change the words here) ----------
@@ -74,11 +74,11 @@ const MEDIA = [
 // each file's path between the quotes, like:  anime: "icons/anime.png"
 // Leave one as "" to keep its cat face for now.
 const MEDIA_ICON_PNGS = {
-  anime:  "file:///C:/Users/joana/OneDrive/Desktop/Aconite/7faf2afeb569ad067d8e94546e2d7e29-removebg-preview.png",
-  manga:  "file:///C:/Users/joana/OneDrive/Desktop/Aconite/074a782459cb3c5831b260f90db92b04-removebg-preview.png",
-  manhwa: "file:///C:/Users/joana/OneDrive/Desktop/Aconite/191e96856bae6535a11bcea65b5e1df0-removebg-preview.png",
-  manhua: "file:///C:/Users/joana/OneDrive/Desktop/Aconite/014f9e075d5239a3a5c428b872324b30-removebg-preview.png",
-  danmei: "file:///C:/Users/joana/OneDrive/Desktop/Aconite/89e7be02513f8bb4148378a0cf15e4b9-removebg-preview.png"
+  anime:  "7faf2afeb569ad067d8e94546e2d7e29-removebg-preview.png",
+  manga:  "074a782459cb3c5831b260f90db92b04-removebg-preview.png",
+  manhwa: "191e96856bae6535a11bcea65b5e1df0-removebg-preview.png",
+  manhua: "014f9e075d5239a3a5c428b872324b30-removebg-preview.png",
+  danmei: "89e7be02513f8bb4148378a0cf15e4b9-removebg-preview.png"
 };
 
 // The titles every account starts with in each checklist (change them freely).
