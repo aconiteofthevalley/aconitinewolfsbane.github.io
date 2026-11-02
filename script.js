@@ -470,8 +470,19 @@ function positionDropdown() {
   dd.style.top = Math.max(0, Math.round(bottom)) + "px";
   dd.style.height = "calc(100vh - " + Math.round(bottom) + "px)";
   dd.style.height = "calc(100dvh - " + Math.round(bottom) + "px)";   // phones: ignores the browser bar (ignored where unsupported)
-  const bg = getComputedStyle(nav).backgroundColor;
-  if (bg && bg !== "transparent" && !/rgba\(.*,\s*0\)$/.test(bg)) dd.style.background = bg;
+  // Always a solid color: the header's color if it is opaque, otherwise the page color, otherwise a fixed fallback
+  const solid = c => {
+    const m = String(c || "").match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const parts = m[1].split(/[,\s\/]+/).filter(Boolean);
+    const a = parts.length > 3 ? parseFloat(parts[3]) : 1;
+    return a >= 0.99 ? "rgb(" + parts.slice(0, 3).join(",") + ")" : null;
+  };
+  const bg = solid(getComputedStyle(nav).backgroundColor) || solid(getComputedStyle(document.body).backgroundColor)
+    || (state.theme === "dark" ? "#2b2422" : "#fffaf6");
+  dd.style.setProperty("background", bg, "important");
+  dd.style.setProperty("opacity", "1", "important");
+  dd.style.setProperty("backdrop-filter", "none", "important");
 }
 window.addEventListener("resize", () => { if (state.menuOpen) positionDropdown(); });
 
@@ -1304,9 +1315,65 @@ function isFutureDay(y, m, d) {
   const t = moodToday();
   return new Date(y, m, d) > new Date(t.y, t.m, t.d);
 }
-// One round mood face (same colors as the emotion bubbles)
+// Cute round mood faces (drawn, so they look the same on every phone). Colors match the emotion bubbles.
+const MOOD_INK = "#4a3530";
+const MOOD_EYE = (x, y) => `<circle cx="${x}" cy="${y}" r="6" fill="${MOOD_INK}"/><circle cx="${x + 2}" cy="${y - 2.2}" r="2" fill="#fff"/>`;
+const MOOD_FEATURES = {
+  happy:
+    `<path d="M26 46 Q33 35 40 46 M60 46 Q67 35 74 46" fill="none" stroke="${MOOD_INK}" stroke-width="4.5" stroke-linecap="round"/>
+     <path d="M37 58 Q50 78 63 58 Z" fill="${MOOD_INK}" stroke="${MOOD_INK}" stroke-width="3" stroke-linejoin="round"/>
+     <path d="M43 67 Q50 63 57 67 Q50 74 43 67 Z" fill="#ff8fa8"/>`,
+  sad:
+    `${MOOD_EYE(33, 50)}${MOOD_EYE(67, 50)}
+     <path d="M26 38 Q33 34 40 40 M74 38 Q67 34 60 40" fill="none" stroke="${MOOD_INK}" stroke-width="3.5" stroke-linecap="round"/>
+     <path d="M32 60 Q29 69 32 72 Q36 69 32 60 Z" fill="#8fd0ff" stroke="#5aa6e0" stroke-width="1.2"/>
+     <path d="M40 72 Q50 63 60 72" fill="none" stroke="${MOOD_INK}" stroke-width="4" stroke-linecap="round"/>`,
+  love:
+    `<path d="M33 60 C20 50 24 38 33 41 C37 42 33 46 33 46 C33 46 29 42 33 41" fill="none"/>
+     <path d="M33 56 C22 48 24 38 31 38 C34 38 33 41 33 41 C33 41 32 38 35 38 C42 38 44 48 33 56 Z" fill="#ff4f7b" stroke="#d93a63" stroke-width="1.5" stroke-linejoin="round"/>
+     <path d="M67 56 C56 48 58 38 65 38 C68 38 67 41 67 41 C67 41 66 38 69 38 C76 38 78 48 67 56 Z" fill="#ff4f7b" stroke="#d93a63" stroke-width="1.5" stroke-linejoin="round"/>
+     <path d="M41 63 Q50 74 59 63" fill="none" stroke="${MOOD_INK}" stroke-width="4" stroke-linecap="round"/>`,
+  disgusted:
+    `<path d="M26 44 L40 48 M74 44 L60 48" stroke="${MOOD_INK}" stroke-width="4.5" stroke-linecap="round"/>
+     <path d="M27 36 Q33 31 40 36 M73 36 Q67 31 60 36" fill="none" stroke="${MOOD_INK}" stroke-width="3" stroke-linecap="round"/>
+     <path d="M34 66 Q40 60 46 66 T58 66 T66 64" fill="none" stroke="${MOOD_INK}" stroke-width="4" stroke-linecap="round"/>
+     <path d="M58 68 Q60 78 66 72 Q66 66 58 68 Z" fill="#ff8fa8"/>`,
+  angry:
+    `<path d="M24 32 L42 42 M76 32 L58 42" stroke="${MOOD_INK}" stroke-width="5" stroke-linecap="round"/>
+     ${MOOD_EYE(34, 52)}${MOOD_EYE(66, 52)}
+     <path d="M40 72 Q50 62 60 72" fill="none" stroke="${MOOD_INK}" stroke-width="4.5" stroke-linecap="round"/>
+     <path d="M80 18 l6 6 M86 18 l-6 6" stroke="#e5604d" stroke-width="3" stroke-linecap="round"/>`,
+  anxious:
+    `<circle cx="33" cy="48" r="9" fill="#fff" stroke="${MOOD_INK}" stroke-width="2.5"/><circle cx="67" cy="48" r="9" fill="#fff" stroke="${MOOD_INK}" stroke-width="2.5"/>
+     <circle cx="34" cy="50" r="3.6" fill="${MOOD_INK}"/><circle cx="66" cy="50" r="3.6" fill="${MOOD_INK}"/>
+     <path d="M26 33 Q33 27 40 33 M60 33 Q67 27 74 33" fill="none" stroke="${MOOD_INK}" stroke-width="3" stroke-linecap="round"/>
+     <path d="M38 70 Q44 64 50 70 T62 70" fill="none" stroke="${MOOD_INK}" stroke-width="4" stroke-linecap="round"/>
+     <path d="M82 30 Q77 40 82 43 Q87 40 82 30 Z" fill="#8fd0ff" stroke="#5aa6e0" stroke-width="1.2"/>`,
+  excited:
+    `<path d="M33 36 L36 44 L45 45 L38 51 L41 60 L33 55 L25 60 L28 51 L21 45 L30 44 Z" fill="#ffd23f" stroke="#e8a317" stroke-width="2" stroke-linejoin="round"/>
+     <path d="M67 36 L70 44 L79 45 L72 51 L75 60 L67 55 L59 60 L62 51 L55 45 L64 44 Z" fill="#ffd23f" stroke="#e8a317" stroke-width="2" stroke-linejoin="round"/>
+     <path d="M38 64 Q50 82 62 64 Z" fill="${MOOD_INK}" stroke="${MOOD_INK}" stroke-width="3" stroke-linejoin="round"/>
+     <path d="M44 72 Q50 69 56 72 Q50 78 44 72 Z" fill="#ff8fa8"/>`,
+  tired:
+    `<path d="M26 47 Q33 54 40 47 M60 47 Q67 54 74 47" fill="none" stroke="${MOOD_INK}" stroke-width="4.5" stroke-linecap="round"/>
+     <path d="M26 36 Q33 33 40 37 M74 36 Q67 33 60 37" fill="none" stroke="${MOOD_INK}" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>
+     <ellipse cx="50" cy="68" rx="5" ry="6" fill="${MOOD_INK}"/>
+     <text x="72" y="26" font-size="17" font-weight="800" font-family="sans-serif" fill="${MOOD_INK}" opacity=".75">z</text>
+     <text x="80" y="16" font-size="11" font-weight="800" font-family="sans-serif" fill="${MOOD_INK}" opacity=".6">z</text>`,
+  other:
+    `${MOOD_EYE(34, 48)}${MOOD_EYE(66, 48)}
+     <path d="M40 64 Q45 71 50 64 Q55 71 60 64" fill="none" stroke="${MOOD_INK}" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+     <circle cx="78" cy="22" r="5" fill="none" stroke="${MOOD_INK}" stroke-width="2" opacity=".5"/><circle cx="87" cy="32" r="2.6" fill="none" stroke="${MOOD_INK}" stroke-width="2" opacity=".5"/>`
+};
 function moodFace(emo, size) {
-  return `<span class="mood-face" style="--c:${emo.color};--cd:${emo.dark};width:${size}px;height:${size}px;font-size:${Math.round(size * 0.58)}px">${emo.emoji}</span>`;
+  return `<span class="mood-face" style="--c:${emo.color};--cd:${emo.dark};width:${size}px;height:${size}px">
+    <svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">
+      <circle class="base" cx="50" cy="50" r="46"/>
+      <ellipse cx="50" cy="30" rx="26" ry="9" fill="#fff" opacity=".28"/>
+      <ellipse cx="22" cy="62" rx="9" ry="5.5" fill="#ff8fa8" opacity=".55"/>
+      <ellipse cx="78" cy="62" rx="9" ry="5.5" fill="#ff8fa8" opacity=".55"/>
+      ${MOOD_FEATURES[emo.key] || MOOD_FEATURES.other}
+    </svg></span>`;
 }
 
 function renderMoodTab() {
@@ -1340,7 +1407,7 @@ function renderMoodMonth(shown) {
     cells += `
       <button type="button" class="mood-cell ${future ? "future" : ""} ${isToday ? "today" : ""}" ${future ? "disabled" : ""}
         onclick="openMoodDay('${key}')" aria-label="${MOOD_MONTHS[shown.m]} ${d}${emo ? ", " + emo.label : ""}">
-        ${emo ? moodFace(emo, 42) : `<span class="mood-empty">${d}</span>`}
+        ${emo ? moodFace(emo, 44) : `<span class="mood-empty">${d}</span>`}
         ${emo ? `<span class="mood-num">${d}</span>` : ""}
       </button>`;
   }
@@ -1399,7 +1466,7 @@ function renderMoodBox() {
         <div class="mood-picks">
           ${EMOTIONS.map(e => `
             <button type="button" class="mood-pick ${draft.emotion === e.key ? "on" : ""}" onclick="pickMood('${e.key}')" aria-label="${escapeHtml(e.label)}">
-              ${moodFace(e, 44)}<small>${escapeHtml(e.label)}</small>
+              ${moodFace(e, 52)}<small>${escapeHtml(e.label)}</small>
             </button>`).join("")}
         </div>
         <textarea id="moodNote" maxlength="300" rows="3" placeholder="Add a note (optional)" oninput="state.moodDraft.note=this.value">${escapeHtml(draft.note)}</textarea>
@@ -3779,8 +3846,8 @@ document.addEventListener("click", () => {
       box-shadow: 0 8px 18px rgba(0,0,0,.14); transform-origin: top left; }
     nav .dropdown.drop-in { animation: dropFromHeader .24s ease-out; }
     @keyframes dropFromHeader {
-      from { clip-path: inset(0 0 100% 0); transform: translateY(-14px); opacity: .4; }
-      to   { clip-path: inset(0 0 0 0);    transform: translateY(0);     opacity: 1; }
+      from { clip-path: inset(0 0 100% 0); transform: translateY(-14px); }
+      to   { clip-path: inset(0 0 0 0);    transform: translateY(0); }
     }
 
     /* Mood tracker */
@@ -3801,9 +3868,12 @@ document.addEventListener("click", () => {
       border: 1.5px dashed var(--border); font-size: 0.78rem; opacity: 0.7; box-sizing: border-box; }
     .mood-cell.out .mood-empty { opacity: 0.35; }
     .mood-num { font-size: 0.72rem; font-weight: 700; opacity: 0.75; }
-    .mood-face { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--c);
-      box-shadow: inset 0 -3px 0 rgba(0,0,0,.08); flex-shrink: 0; }
-    body.dark .mood-face { background: var(--cd); }
+    .mood-face { display: inline-flex; line-height: 0; flex-shrink: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.12)); }
+    .mood-face svg { display: block; overflow: visible; }
+    .mood-face .base { fill: var(--c); stroke: rgba(0,0,0,.14); stroke-width: 2.5; }
+    body.dark .mood-face .base { fill: var(--cd); stroke: rgba(255,255,255,.18); }
+    .mood-cell:hover:not(:disabled) .mood-face, .mood-pick:hover .mood-face { transform: rotate(-6deg) scale(1.05); }
+    .mood-face { transition: transform .15s ease; }
     .mood-hint { margin: 14px 0 8px; font-size: 0.85rem; opacity: 0.65; }
     .mood-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; margin-top: 10px; font-size: 0.75rem; }
     .mood-legend span { display: inline-flex; align-items: center; gap: 4px; }
